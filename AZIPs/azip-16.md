@@ -4,7 +4,7 @@
 
 | `azip` | `title` | `description` | `author` | `discussions-to` | `status` | `category` | `created` | `requires` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 16 | Activate Equivocation Slashing and Update Economic Parameters | Activates equivocation penalties, splits SMALL/MEDIUM/LARGE slash units, halves `provingCostPerMana`, and enables a new checkpoint offense. | Amin Sammara (@aminsammara, amin@aztec-labs.com) | N/A | Draft | Economics | 2026-05-26 | AZIP-7 |
+| 16 | Activate Equivocation Slashing and Update Economic Parameters | Activates equivocation penalties, splits SMALL/MEDIUM/LARGE slash units, halves `provingCostPerMana`, and enables a new checkpoint offense. | Amin Sammara (@aminsammara, amin@aztec-labs.com) | N/A | Accepted | Economics | 2026-05-26 | AZIP-7 |
 
 ## Abstract
 
