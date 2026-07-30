@@ -94,10 +94,10 @@ protocolFeePerMana = summedMinFee − toFeeAsset(sequencerCost) − toFeeAsset(p
 
 ### Governance of μ
 
-- **Initial value:** The deployer sets the starting `μ` in `FeeConfig`, as with `provingCostPerMana`. A start at `0` gives a deployment with a fee system identical to today. Increases then follow the ×3/2 limit below.
-- **Activation from zero:** A ×3/2 limiter cannot move a value off zero. The setter therefore permits one special step: from μ = 0 to 10,000 bps (μ = 1). No other target is valid from zero.
-- **Increases from μ > 0:** The setter SHOULD limit increases to ×3/2 per 30-day window. This matches `setProvingCostPerMana` ([AZIP-2](./azip-2.md)).
-- **Decreases:** Decreases SHOULD take effect immediately, with no rate limit. The minimum MUST be `0`. Re-activation from 0 again permits only 10,000 bps.
+- **Initial value:** The deployer sets the starting `μ_bps` in `FeeConfig`, as with `provingCostPerMana`. A start at `0` gives a deployment with a fee system identical to today. Increases then follow the limit below.
+- **Increases:** The setter SHOULD bound each increase per 30-day window by ×3/2 **on the fee multiplier**, not on the margin: `(10_000 + μ_bps_new) × 2 ≤ (10_000 + μ_bps_current) × 3`. The bounded quantity is `(1 + μ)`, the number users actually pay, so every step raises the pinned fee by at most ×1.5 at constant costs and congestion. The window and step size match `setProvingCostPerMana` ([AZIP-2](./azip-2.md)).
+- **Activation from zero:** No special case. The bound above already handles it: from `μ = 0` it permits any target up to 5,000 bps (fee ×1.5), the same ×3/2 rule as every later step.
+- **Decreases:** Decreases SHOULD take effect immediately, with no rate limit. The minimum MUST be `0`. Because the limiter references the fee, re-raising after any decrease — to zero or to a small margin — proceeds at the same ×3/2-per-window pace; there is no slow-recovery dead zone at small margins.
 - **Events:**  Each μ change SHOULD emit an event with the old and new values.
 
 ### Deployment
