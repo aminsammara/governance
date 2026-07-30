@@ -17,7 +17,7 @@ This AZIP makes two changes:
 
 The markup per mana is constant below the mana target. The markup collected per checkpoint is `μ × cost × manaUsed`. It grows in proportion to mana used, from zero on an empty chain to `μ × cost × manaTarget` at target. Above target, the congestion premium adds on top. The block reward is not modified.
 
-This AZIP deploys at `μ = 0`, which is bit-identical to the current system. Governance then raises `μ` in rate-limited steps.
+This AZIP deploys at `μ = 0`, which is bit-identical to the current system. Governance then raises `μ` in rate-limited steps; the limiter bounds the fee multiplier `(1 + μ)`, so each step raises the pinned fee by at most ×3/2.
 
 ## Background
 
@@ -74,7 +74,7 @@ protocolFeePerMana = summedMinFee − toFeeAsset(sequencerCost) − toFeeAsset(p
 ```
 
 - `μ` is a new field in **`FeeConfig`**. The deployer sets its initial value. Governance adjusts it after deployment with `setProtocolMargin`. This is the same pattern as `provingCostPerMana`.
-- `μ` is expressed in basis points (`μ_bps`). It is packed into bits 224 to 255 of **`CompressedFeeConfig`**. Today's `compress()` leaves these 32 bits empty, so that storage layout does not change. A 32 bit field caps `μ` near 429,496×. A 16 bit field would cap `μ` at 7.55×.
+- `μ` is expressed in basis points (`μ_bps`). It is packed into 16 bits, bits 224 to 239 of **`CompressedFeeConfig`**. Today's `compress()` leaves the top 32 bits empty, so the storage layout does not change and bits 240 to 255 remain free for future fields. The 16-bit field caps `μ` at 6.55× (a fee multiplier of 7.55×), comfortably above the net-zero supply point of `μ ≈ 3.7` derived in Economics Considerations.
 - The implementation applies `(1 + μ)` inside `congestionMultiplier()`. It MUST scale the `fakeExponential` factor to `(10000 + μ_bps) × 1e5` (**`FeeLib.sol:L360`**). This equals `1e9` at `μ=0` and is exact for all bps values. The implementation MUST NOT scale the `mulDiv` divisor. If both sites are scaled equally, the margin cancels and the fee does not change.
 - Consequence: the congestion multiplier returned by `getManaMinFeeComponentsAt` is now scaled by `(1+μ)`. The uncongested baseline becomes `(1+μ) × 1e9` not `1e9`. A consumer that reads the multiplier as a pure congestion signal MUST correct for this scale.
 - The implementation MUST compute `protocolFeePerMana` as one subtraction: the pinned fee minus the two converted operator costs. Then `fee − protocolFee = cost × manaUsed` holds exactly, to the wei. The implementation MUST NOT convert the margin and congestion tranches separately. The Ceil conversion is not additive, so separate conversion can differ by one wei and mis-pay operators.
@@ -138,8 +138,8 @@ The TypeScript mirror `stdlib/src/gas/fee_math.ts` MUST be updated to match the 
 
 1. **Differential bit-identity at `μ = 0`:** The new `FeeLib` reproduces the current fee, header fields, and burn byte-for-byte across the existing `fee_data_points.json` trace and randomized excess-mana, gas, and price states.
 2. **Waterfall identity:** For randomized (`μ`, gas, price, `manaUsed`): `fee − protocolFee = cost × manaUsed` exactly; prover fee = `proverCost × manaUsed`; sequencer fee = `seqCost × manaUsed` plus injected priority fees.
-3. **Residual cap robustness:** When `feeMinFee` saturates uint128, operators still receive full cost; the shortfall reduces only the protocol-fee tranche.
-4. **Margin setter semantics:** Activation from 0 permits only 10,000 bps; ×3/2 step bound from `μ > 0`; 30-day cooldown; immediate decrease to `0`; `μ` cannot go below 0; event emission.
+3. **Residual cap robustness:** When `summedMinFee` saturates uint128, operators still receive full cost; the shortfall reduces only the protocol-fee tranche.
+4. **Margin setter semantics:** Increases bounded by `(10_000 + new) × 2 ≤ (10_000 + current) × 3` per window — from 0, targets up to 5,000 bps pass and 5,001 reverts; 30-day cooldown; immediate decrease to `0`; `μ` cannot go below 0; event emission.
 5. **Recipient semantics:** The default `protocolFeeRecipient` equals `address(bytes20("CUAUHXICALLI"))`; only Governance can call `setProtocolFeeRecipient`; `address(0)` reverts; event emission; after a change, the next epoch-proof submission pays the protocol fee to the new recipient.
 
 ## Economics Considerations
