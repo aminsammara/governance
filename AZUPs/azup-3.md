@@ -170,7 +170,7 @@ Each slot's proposer then signals for the payload in the `GovernanceProposer`. O
 
 ## Open Questions and Feedback
 
-- `initialEthPerFeeAsset`, the starting ETH price of the fee asset, is a point-in-time market value and will be refreshed in the deploy script's configuration immediately before the mainnet deployment.
+- `initialEthPerFeeAsset`, the starting ETH price of the fee asset, is set to `5_934_240` (0.0000059342 ETH per AZTEC), read from the AZTEC/ETH Uniswap v4 pool at mainnet block 26148995 (2026-10-08). It only sets the starting point the fee oracle moves from.
 - [AZIP-31](https://github.com/AztecProtocol/governance/pull/77), [AZIP-33](https://github.com/AztecProtocol/governance/pull/79), [AZIP-34](https://github.com/AztecProtocol/governance/pull/81) and [AZIP-35](https://github.com/AztecProtocol/governance/pull/68) are still under review. Feedback on them is welcome in their pull requests.
 
 ## Copyright Waiver
